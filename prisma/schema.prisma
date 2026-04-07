@@ -1,0 +1,213 @@
+// Arquiteure — schema de base de dados
+// Modelo append-only para auditoria e versões imutáveis para rastreabilidade.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CLIENT
+  ARCHITECT
+  ENGINEER
+  ADMIN
+}
+
+enum ProjectType {
+  REMODEL
+  EXTENSION
+  NEW_BUILD
+  INDUSTRIAL
+  HOUSING
+  MIXED_USE
+}
+
+enum ProjectStatus {
+  DRAFT
+  IN_DESIGN
+  AWAITING_APPROVAL
+  APPROVED
+  SUBMITTED
+  ARCHIVED
+}
+
+enum ProjectStage {
+  CONCEPT
+  PRELIM
+  EXEC
+  SUBMISSION
+}
+
+enum AssetKind {
+  PHOTO
+  PLAN
+  AUDIO
+  DOC
+  MEASURE
+  TEXT
+}
+
+enum DecisionStatus {
+  PROPOSED
+  APPROVED
+  REJECTED
+}
+
+enum GateKind {
+  LEGAL
+  STRUCTURAL
+  URBAN
+  SAFETY
+  ACCESSIBILITY
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  role      UserRole  @default(CLIENT)
+  createdAt DateTime  @default(now())
+  projects  Project[] @relation("OwnerProjects")
+}
+
+model Project {
+  id             String           @id @default(cuid())
+  ownerId        String
+  owner          User             @relation("OwnerProjects", fields: [ownerId], references: [id])
+  name           String
+  type           ProjectType
+  status         ProjectStatus    @default(DRAFT)
+  jurisdiction   String           @default("PT")
+  municipality   String?
+  description    String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  assets         Asset[]
+  versions       ProjectVersion[]
+  intents        Intent[]
+}
+
+model ProjectVersion {
+  id           String         @id @default(cuid())
+  projectId    String
+  project      Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parentId     String?
+  parent       ProjectVersion? @relation("VersionLineage", fields: [parentId], references: [id])
+  children     ProjectVersion[] @relation("VersionLineage")
+  stage        ProjectStage   @default(CONCEPT)
+  snapshotJson Json
+  createdBy    String
+  createdAt    DateTime       @default(now())
+  diagnoses    Diagnosis[]
+  alternatives Alternative[]
+  decisions    Decision[]
+  gates        ApprovalGate[]
+}
+
+model Asset {
+  id        String    @id @default(cuid())
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  kind      AssetKind
+  uri       String
+  metaJson  Json?
+  createdAt DateTime  @default(now())
+  intents   Intent[]
+}
+
+model Intent {
+  id               String  @id @default(cuid())
+  projectId        String
+  project          Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sourceAssetId    String?
+  sourceAsset      Asset?  @relation(fields: [sourceAssetId], references: [id])
+  summary          String
+  requirementsJson Json
+  confidence       Float   @default(0.5)
+  createdAt        DateTime @default(now())
+}
+
+model Diagnosis {
+  id           String         @id @default(cuid())
+  versionId    String
+  version      ProjectVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  findingsJson Json
+  createdAt    DateTime       @default(now())
+}
+
+model Alternative {
+  id            String         @id @default(cuid())
+  versionId     String
+  version       ProjectVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  name          String
+  descriptionMd String
+  layoutJson    Json
+  scoreJson     Json
+  svgPreview    String?        @db.Text
+  createdAt     DateTime       @default(now())
+}
+
+model Decision {
+  id           String         @id @default(cuid())
+  versionId    String
+  version      ProjectVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  ruleIds      String[]
+  rationaleMd  String
+  status       DecisionStatus @default(PROPOSED)
+  createdAt    DateTime       @default(now())
+}
+
+model Rule {
+  id            String       @id @default(cuid())
+  code          String       @unique
+  source        String
+  jurisdiction  String       @default("PT")
+  category      String
+  title         String
+  textMd        String       @db.Text
+  machineJson   Json
+  effectiveFrom DateTime?
+  supersededBy  String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  updates       RuleUpdate[]
+}
+
+model RuleUpdate {
+  id          String   @id @default(cuid())
+  ruleId      String
+  rule        Rule     @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  diffJson    Json
+  sourceUrl   String
+  fetchedAt   DateTime @default(now())
+  impactNote  String?
+}
+
+model AuditEvent {
+  id         String   @id @default(cuid())
+  actor      String
+  action     String
+  entity     String
+  entityId   String
+  beforeJson Json?
+  afterJson  Json?
+  at         DateTime @default(now())
+
+  @@index([entity, entityId])
+}
+
+model ApprovalGate {
+  id          String         @id @default(cuid())
+  versionId   String
+  version     ProjectVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  gate        GateKind
+  required    Boolean        @default(true)
+  granted     Boolean        @default(false)
+  grantedBy   String?
+  grantedAt   DateTime?
+  notes       String?
+}

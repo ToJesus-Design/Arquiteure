@@ -1,0 +1,26 @@
+{
+  "name": "arquiteure",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plataforma autoevolutiva de arquitetura, engenharia e planeamento urbano (PT).",
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:e2e": "playwright test",
+    "db:push": "prisma db push --schema prisma/schema.prisma",
+    "db:generate": "prisma generate --schema prisma/schema.prisma",
+    "seed": "tsx scripts/seed-knowledge.ts",
+    "worker:update-knowledge": "tsx scripts/update-knowledge.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "prisma": "^5.16.0",
+    "tsx": "^4.16.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}

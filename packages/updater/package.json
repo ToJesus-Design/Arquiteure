@@ -1,0 +1,16 @@
+{
+  "name": "@arquiteure/updater",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": { "typecheck": "tsc --noEmit" },
+  "dependencies": {
+    "@arquiteure/db": "workspace:*",
+    "@arquiteure/ai": "workspace:*",
+    "@arquiteure/knowledge": "workspace:*",
+    "@arquiteure/audit": "workspace:*"
+  },
+  "devDependencies": { "typescript": "^5.4.5" }
+}

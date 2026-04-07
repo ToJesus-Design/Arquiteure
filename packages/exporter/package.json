@@ -1,0 +1,18 @@
+{
+  "name": "@arquiteure/exporter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": { "typecheck": "tsc --noEmit" },
+  "dependencies": {
+    "@arquiteure/core": "workspace:*",
+    "@arquiteure/drawing": "workspace:*",
+    "pdfkit": "^0.15.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "@types/pdfkit": "^0.13.4"
+  }
+}

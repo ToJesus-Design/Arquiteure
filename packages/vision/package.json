@@ -1,0 +1,14 @@
+{
+  "name": "@arquiteure/vision",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": { "typecheck": "tsc --noEmit" },
+  "dependencies": {
+    "@arquiteure/ai": "workspace:*",
+    "@anthropic-ai/sdk": "^0.27.0"
+  },
+  "devDependencies": { "typescript": "^5.4.5" }
+}
