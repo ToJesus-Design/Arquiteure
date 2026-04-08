@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm install --frozen-lockfile=false && pnpm db:generate && pnpm --filter @arquiteure/web build",
+  "outputDirectory": "apps/web/.next",
+  "installCommand": "echo 'installed in build'",
+  "framework": "nextjs",
+  "regions": ["fra1"],
+  "env": {
+    "DATABASE_URL": "@arquiteure-database-url",
+    "ANTHROPIC_API_KEY": "@arquiteure-anthropic-key",
+    "OPENAI_API_KEY": "@arquiteure-openai-key",
+    "NEXTAUTH_SECRET": "@arquiteure-nextauth-secret"
+  }
+}
