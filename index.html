@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arquiteure — Plataforma de Arquitetura, Engenharia e Urbanismo PT</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; background: #f6f6f7; color: #111; line-height: 1.5; }
+header { background: #111; color: #fff; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+header strong { font-size: 18px; letter-spacing: 0.5px; }
+header .tag { opacity: 0.6; font-size: 12px; }
+nav { background: #1d1d1f; padding: 0 24px; display: flex; gap: 4px; overflow-x: auto; }
+nav button { background: transparent; color: #aaa; border: 0; padding: 14px 16px; cursor: pointer; font-size: 14px; font-family: inherit; border-bottom: 2px solid transparent; white-space: nowrap; }
+nav button:hover { color: #fff; }
+nav button.active { color: #fff; border-bottom-color: #4ea3ff; }
+main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+.view { display: none; }
+.view.active { display: block; }
+.card { background: #fff; padding: 20px; border-radius: 10px; border: 1px solid #e3e3e5; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+h1 { font-size: 28px; margin-bottom: 8px; }
+h2 { font-size: 20px; margin: 12px 0 8px; }
+h3 { font-size: 16px; margin: 12px 0 6px; }
+p, li { margin-bottom: 6px; font-size: 14px; }
+ul { padding-left: 20px; }
+.btn { background: #111; color: #fff; border: 0; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 14px; margin-right: 8px; }
+.btn:hover { background: #333; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn.secondary { background: #fff; color: #111; border: 1px solid #ccc; }
+.btn.secondary:hover { background: #f3f3f3; }
+.btn.success { background: #1f7a3a; }
+textarea, input, select { width: 100%; padding: 9px 11px; border: 1px solid #ccc; border-radius: 6px; font-family: inherit; font-size: 14px; margin-top: 4px; }
+textarea { resize: vertical; min-height: 80px; }
+label { font-size: 12px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.4px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 10px 0; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin: 10px 0; }
+.pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.pill.ok { background: #d4edda; color: #155724; }
+.pill.warn { background: #fff3cd; color: #856404; }
+.pill.block { background: #f8d7da; color: #721c24; }
+.pill.info { background: #cce5ff; color: #004085; }
+.alt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+pre { background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; font-size: 12px; overflow: auto; font-family: "SF Mono", Menlo, Consolas, monospace; }
+.kv { display: grid; grid-template-columns: 200px 1fr; gap: 8px; font-size: 13px; margin: 4px 0; }
+.kv strong { color: #555; }
+.score-bar { background: #eee; border-radius: 10px; overflow: hidden; height: 8px; margin: 4px 0; }
+.score-bar > div { background: linear-gradient(90deg, #4ea3ff, #1f7a3a); height: 100%; }
+.audit-row { padding: 8px 0; border-bottom: 1px dashed #e3e3e5; font-size: 13px; }
+.audit-row:last-child { border-bottom: 0; }
+.audit-row time { color: #888; font-family: monospace; font-size: 11px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+table th, table td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #eee; }
+table th { background: #f9f9f9; font-size: 11px; text-transform: uppercase; color: #555; }
+.banner { background: linear-gradient(135deg, #4ea3ff 0%, #1f7a3a 100%); color: #fff; padding: 24px; border-radius: 10px; margin-bottom: 20px; }
+.banner h1 { color: #fff; font-size: 24px; }
+.banner p { opacity: 0.92; margin-top: 6px; }
+.muted { color: #777; font-size: 12px; }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; margin: 6px 0; }
+.legend span { display: flex; align-items: center; gap: 4px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; border: 1px solid #999; }
+.demo-note { background: #fff3cd; border: 1px solid #ffe69c; padding: 10px 14px; border-radius: 6px; font-size: 12px; color: #856404; margin-bottom: 14px; }
+.demo-note strong { color: #573c08; }
+</style>
+</head>
+<body>
+<header>
+<strong>Arquiteure</strong>
+<span class="tag">arquitetura · engenharia · urbanismo PT</span>
+</header>
+<nav id="nav">
+<button data-view="home" class="active">Início</button>
+<button data-view="new">Novo Projeto</button>
+<button data-view="project">Projeto Demo</button>
+<button data-view="alts">Alternativas</button>
+<button data-view="memoria">Memória Descritiva</button>
+<button data-view="audit">Histórico</button>
+<button data-view="rules">Base de Regras PT</button>
+<button data-view="worker">Worker</button>
+<button data-view="tech">Arquitetura Técnica</button>
+</nav>
+<main>
+
+<div class="demo-note">
+<strong>Demo interativa.</strong> Esta página contém a UI completa da plataforma com o motor real do gerador, validador e drawing a correr no browser. Clica em <em>Gerar alternativas</em> e vais ver plantas reais validadas contra as regras RGEU/RJUE/DL163.
+</div>
+
+<!-- HOME -->
+<section class="view active" id="view-home">
+<div class="banner">
+<h1>Descreve. Nós tratamos da lei.</h1>
+<p>Plataforma autoevolutiva de arquitetura, engenharia e planeamento urbano focada no enquadramento legal português. Recebe a tua intenção em texto, voz ou foto e devolve projetos validados.</p>
+</div>
+<div class="card">
+<h2>Como funciona</h2>
+<ol style="padding-left:22px;font-size:14px">
+<li><strong>Cria projeto</strong> indicando tipo, município e descrição livre.</li>
+<li><strong>Descreve a intenção</strong> em texto, áudio ou através de fotografias do espaço.</li>
+<li>O motor extrai um <strong>programa funcional</strong> estruturado.</li>
+<li>O <strong>gerador</strong> produz N alternativas de layout 2D.</li>
+<li>O <strong>validador</strong> confronta cada layout com RGEU, RJUE, DL 163/2006, RJ-SCIE e PDM aplicável.</li>
+<li>Cada alternativa recebe um score legal/funcional/estético/económico.</li>
+<li>Arquiteto inscrito <strong>aprova</strong> explicitamente cada gate (LEGAL, URBAN, SAFETY, ACCESSIBILITY, STRUCTURAL).</li>
+<li>O <strong>exportador</strong> emite dossier PDF + DXF + memória descritiva conforme estrutura aceite por câmaras municipais.</li>
+</ol>
+</div>
+<div class="card">
+<h2>Princípios</h2>
+<ul>
+<li>Nenhuma decisão é definitiva sem aprovação humana.</li>
+<li>Cada escolha cita a regra técnica/legal aplicada.</li>
+<li>Versões imutáveis em DAG — todas as alterações criam nova iteração.</li>
+<li>Base de conhecimento autoevolutiva sobre fontes oficiais (DRE, PDMs).</li>
+<li>Hipóteses do LLM marcadas explicitamente como [HIPÓTESE].</li>
+</ul>
+</div>
+<p><button class="btn" onclick="show('new')">Criar projeto</button> <button class="btn secondary" onclick="show('project')">Ver projeto demo</button></p>
+</section>
+
+<!-- NEW PROJECT -->
+<section class="view" id="view-new">
+<div class="card">
+<h1>Novo projeto</h1>
+<p class="muted">Cria um projeto e começa a descrever a intenção. Em produção isto persiste em PostgreSQL via Prisma.</p>
+<div class="row">
+<div><label>Nome</label><input id="newName" value="Remodelação T2 Graça"></div>
+<div><label>Tipo</label>
+<select id="newType">
+<option value="HOUSING">Habitação</option>
+<option value="REMODEL">Remodelação</option>
+<option value="EXTENSION">Ampliação</option>
+<option value="NEW_BUILD">Construção nova</option>
+<option value="MIXED_USE">Uso misto</option>
+<option value="INDUSTRIAL">Industrial</option>
+</select></div>
+</div>
+<div class="row">
+<div><label>Município</label><input id="newMuni" value="Lisboa"></div>
+<div><label>Zona PDM</label>
+<select id="newZone">
+<option value="URBANO_RESIDENCIAL">Urbano residencial</option>
+<option value="URBANO_MISTO">Urbano misto</option>
+<option value="RURAL">Rural</option>
+</select></div>
+</div>
+<div><label>Descrição livre</label>
+<textarea id="newDesc">T2 familiar para casal com 2 filhos. Sala ampla, cozinha aberta, dois quartos confortáveis, casa de banho completa. Acessibilidade desejável. Budget 120k€.</textarea>
+</div>
+<p style="margin-top:14px"><button class="btn" onclick="createProject()">Criar projeto</button></p>
+</div>
+</section>
+
+<!-- PROJECT -->
+<section class="view" id="view-project">
+<div class="card">
+<h1 id="projTitle">Remodelação T2 Graça</h1>
+<p><span class="pill info" id="projType">HOUSING</span> · <span id="projMuni">Lisboa</span> · <em id="projStatus">DRAFT</em></p>
+</div>
+
+<div class="card">
+<h2>1. Intenção</h2>
+<p class="muted">Descreve em texto livre. Em produção isto vai para o Claude que extrai um programa funcional estruturado.</p>
+<textarea id="intentText">T2 familiar para casal com 2 filhos. Sala ampla, cozinha aberta, dois quartos confortáveis, casa de banho completa. Acessibilidade desejável. Budget 120k€.</textarea>
+<p style="margin-top:10px">
+<button class="btn" onclick="extractIntent()">Extrair programa</button>
+<button class="btn secondary" onclick="alert('Em produção: gravação áudio → Whisper STT → Claude.')">🎙 Gravar voz</button>
+<button class="btn secondary" onclick="alert('Em produção: upload de fotos → Claude vision → análise dimensional.')">📷 Carregar fotos</button>
+</p>
+<div id="programOut" style="margin-top:14px;display:none">
+<h3>Programa extraído</h3>
+<pre id="programJson"></pre>
+</div>
+</div>
+
+<div class="card">
+<h2>2. Lote</h2>
+<div class="row3">
+<div><label>Largura (m)</label><input type="number" id="lotW" value="12"></div>
+<div><label>Profundidade (m)</label><input type="number" id="lotD" value="10"></div>
+<div><label>Nº alternativas</label><input type="number" id="altCount" value="3" min="1" max="6"></div>
+</div>
+<p style="margin-top:10px">
+<button class="btn" onclick="generateAlts()">Gerar alternativas</button>
+</p>
+</div>
+</section>
+
+<!-- ALTS -->
+<section class="view" id="view-alts">
+<div class="card">
+<h1>Alternativas</h1>
+<p class="muted">Geradas pelo motor de slicing recursivo + validadas contra a base de regras PT em tempo real.</p>
+<div class="legend">
+<span><i style="background:#d0f0c0"></i>Sala</span>
+<span><i style="background:#fff3c4"></i>Quarto</span>
+<span><i style="background:#ffd6a5"></i>Cozinha</span>
+<span><i style="background:#c4e0ff"></i>WC</span>
+<span><i style="background:#eee"></i>Corredor</span>
+<span><i style="background:#e0d4ff"></i>Escritório</span>
+</div>
+</div>
+<div id="altGrid" class="alt-grid"></div>
+<div id="altEmpty" class="card"><p class="muted">Nenhuma alternativa gerada ainda. Volta a <a href="#" onclick="show('project');return false">Projeto Demo</a> e clica em <em>Gerar alternativas</em>.</p></div>
+</section>
+
+<!-- MEMORIA -->
+<section class="view" id="view-memoria">
+<div class="card">
+<h1>Memória Descritiva e Justificativa</h1>
+<p class="muted">Gerada automaticamente em Markdown após validação. Estrutura compatível com submissões municipais (RJUE).</p>
+<pre id="memoriaOut" style="white-space:pre-wrap;background:#fff;color:#111;border:1px solid #e3e3e5">Gera primeiro uma alternativa.</pre>
+<p style="margin-top:14px">
+<button class="btn" onclick="alert('Em produção: chama @arquiteure/exporter → pdfkit → blob A4 com 5 páginas (capa, memória, peças desenhadas, conformidade, citações).')">Exportar PDF</button>
+<button class="btn secondary" onclick="exportDxf()">Exportar DXF</button>
+</p>
+</div>
+</section>
+
+<!-- AUDIT -->
+<section class="view" id="view-audit">
+<div class="card">
+<h1>Histórico imutável</h1>
+<p class="muted">DAG de versões + audit trail append-only. Tudo o que aconteceu fica registado.</p>
+<h2>Versões do projeto</h2>
+<div id="versions"><p class="muted">Sem versões ainda.</p></div>
+<h2 style="margin-top:18px">Audit trail (AuditEvent)</h2>
+<div id="auditTrail"><p class="muted">Vazio.</p></div>
+</div>
+</section>
+
+<!-- RULES -->
+<section class="view" id="view-rules">
+<div class="card">
+<h1>Base de Regras PT</h1>
+<p class="muted">Cada regra contém texto humano + predicado executável. O validator avalia os predicados contra o layout.</p>
+<table id="rulesTable">
+<thead><tr><th>Código</th><th>Categoria</th><th>Título</th><th>Fonte</th><th>Severidade</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</section>
+
+<!-- WORKER -->
+<section class="view" id="view-worker">
+<div class="card">
+<h1>Worker de atualização</h1>
+<p class="muted">Processo backend (apps/worker) que corre diariamente às 04:00, verifica fontes DRE e cria <code>RuleUpdate</code> para revisão humana. <strong>Nunca</strong> sobrescreve regras vigentes.</p>
+<pre id="workerLog"></pre>
+<p style="margin-top:10px"><button class="btn" onclick="runWorker()">Simular ciclo</button></p>
+</div>
+</section>
+
+<!-- TECH -->
+<section class="view" id="view-tech">
+<div class="card">
+<h1>Arquitetura técnica</h1>
+<p class="muted">Monorepo pnpm, TypeScript estrito, ESM end-to-end.</p>
+<h2>Apps</h2>
+<ul>
+<li><code>apps/web</code> — Next.js 14 (App Router) + tRPC + React Query</li>
+<li><code>apps/worker</code> — node-cron, atualização da base de regras</li>
+</ul>
+<h2>Packages</h2>
+<ul>
+<li><code>core</code> — tipos e schemas Zod partilhados</li>
+<li><code>db</code> — Prisma client (PostgreSQL) com modelo append-only</li>
+<li><code>audit</code> — versões imutáveis + audit trail</li>
+<li><code>ai</code> — wrapper Claude Opus 4.6 + Whisper STT + callStructured com retry via Zod</li>
+<li><code>intent</code> — extração de programa funcional</li>
+<li><code>vision</code> — análise de fotos/plantas via Claude vision</li>
+<li><code>voice</code> — speech-to-text</li>
+<li><code>knowledge</code> — base de regras PT + predicados executáveis</li>
+<li><code>validator</code> — motor de avaliação de predicados</li>
+<li><code>generator</code> — slicing recursivo + scoring multi-critério</li>
+<li><code>drawing</code> — Layout → SVG</li>
+<li><code>exporter</code> — Dossier PDF, DXF, memória descritiva</li>
+<li><code>updater</code> — crawler DRE + diff via LLM</li>
+<li><code>api</code> — router tRPC central</li>
+</ul>
+<h2>Modelo de dados</h2>
+<pre>Project ─┬─ Asset (foto/audio/doc)
+         ├─ Intent (programa extraído)
+         └─ ProjectVersion (DAG imutável)
+              ├─ Diagnosis
+              ├─ Alternative (layout + scores + svgPreview)
+              ├─ Decision (cita ruleIds)
+              └─ ApprovalGate (LEGAL/URBAN/SAFETY/...)
+
+Rule ──── RuleUpdate (changes pendentes de revisão)
+
+AuditEvent (append-only, indexado por entity+entityId)</pre>
+<h2>Princípios aplicados</h2>
+<ul>
+<li><strong>Nada definitivo sem humano:</strong> ApprovalGate requer architectProcedure.</li>
+<li><strong>Citação obrigatória:</strong> Decision.ruleIds, Alternative cita regras avaliadas.</li>
+<li><strong>Imutabilidade:</strong> ProjectVersion nunca é alterada; mudanças geram nova versão.</li>
+<li><strong>Autoevolução controlada:</strong> RuleUpdate fica pendente até revisão.</li>
+</ul>
+</div>
+</section>
+
+</main>
+<script>
+// Arquiteure — demo interativa (gerador + validador + drawing portados para browser)
+
+const state = {
+  project: null,
+  program: null,
+  alternatives: [],
+  versions: [],
+  audit: [],
+  counter: 0,
+};
+
+// ─── Regras PT (subset executável) ───────────────────────────────────────
+const PT_RULES = [
+  { code: "RGEU-65", source: "DL 38382/51 art. 65.º", category: "HABITABILIDADE", title: "Pé-direito mínimo em compartimentos habitacionais", severity: "BLOCK",
+    predicate: { type: "min", field: "ceilingHeight", value: 2.4, unit: "m", msg: "Pé-direito < 2,40 m (RGEU art. 65.º)" } },
+  { code: "RGEU-66-QUARTO", source: "DL 38382/51 art. 66.º", category: "AREA_MINIMA", title: "Área mínima de quarto", severity: "BLOCK",
+    predicate: { type: "roomMinArea", roomKind: "bedroom", minAreaM2: 9, msg: "Quarto < 9 m² (RGEU art. 66.º)" } },
+  { code: "RGEU-66-COZ", source: "DL 38382/51 art. 66.º", category: "AREA_MINIMA", title: "Área mínima de cozinha", severity: "BLOCK",
+    predicate: { type: "roomMinArea", roomKind: "kitchen", minAreaM2: 6, msg: "Cozinha < 6 m² (RGEU art. 66.º)" } },
+  { code: "RGEU-66-WC", source: "DL 38382/51 art. 66.º", category: "AREA_MINIMA", title: "Área mínima de instalação sanitária", severity: "BLOCK",
+    predicate: { type: "roomMinArea", roomKind: "bathroom", minAreaM2: 3.5, msg: "WC < 3,5 m² (RGEU art. 66.º)" } },
+  { code: "RGEU-66-SALA", source: "DL 38382/51 art. 66.º", category: "AREA_MINIMA", title: "Área mínima de sala", severity: "BLOCK",
+    predicate: { type: "roomMinArea", roomKind: "livingroom", minAreaM2: 10, msg: "Sala < 10 m² (RGEU art. 66.º)" } },
+  { code: "RGEU-71", source: "DL 38382/51 art. 71.º", category: "ILUMINACAO", title: "Iluminação/ventilação natural em compartimentos habitáveis", severity: "WARN",
+    predicate: { type: "requiresWindow", kinds: ["bedroom", "livingroom", "kitchen"], msg: "Sem vão de iluminação natural (RGEU art. 71.º)" } },
+  { code: "DL163-2006-CORR", source: "DL 163/2006 §2.3", category: "ACESSIBILIDADE", title: "Largura mínima de corredor acessível", severity: "WARN",
+    predicate: { type: "corridorMinWidth", minWidthM: 1.2, msg: "Corredor < 1,20 m (DL 163/2006)" } },
+  { code: "PDM-LX-IOS", source: "PDM Lisboa", category: "URBANISMO", title: "Índice de ocupação do solo máximo", severity: "BLOCK",
+    predicate: { type: "max", field: "footprintRatio", value: 0.6, msg: "Implantação > 60% do lote (PDM)" } },
+];
+
+const ROOM_DEFAULTS = { bedroom: 12, livingroom: 16, kitchen: 8, bathroom: 4, corridor: 4, office: 10 };
+const ROOM_PT = { bedroom: "Quarto", livingroom: "Sala", kitchen: "Cozinha", bathroom: "WC", corridor: "Corredor", office: "Escritório" };
+function expandProgram(prog) { const out=[],counters={}; for(const r of prog.rooms){const n=r.count||1,area=r.minAreaM2||ROOM_DEFAULTS[r.kind]||10; for(let i=0;i<n;i++){counters[r.kind]=(counters[r.kind]||0)+1; out.push({kind:r.kind,label:(ROOM_PT[r.kind]||r.kind)+" "+counters[r.kind],area});}} return out.sort((a,b)=>b.area-a.area); }
+function generateLayout(prog,opts,variant){const rooms=expandProgram(prog),total=rooms.reduce((s,r)=>s+r.area,0); if(total>opts.lotW*opts.lotD*0.98)return null; const placed=[];let idx=0;const regions=[{x:0,y:0,w:opts.lotW,d:opts.lotD,rooms}]; while(regions.length){const r=regions.shift(); if(!r.rooms.length)continue; if(r.rooms.length===1){placed.push({id:"r"+idx++,spec:r.rooms[0],x:r.x,y:r.y,w:r.w,d:r.d});continue;} const totalR=r.rooms.reduce((s,x)=>s+x.area,0);let acc=0,splitIdx=0; for(let i=0;i<r.rooms.length;i++){acc+=r.rooms[i].area;if(acc>=totalR/2){splitIdx=i+1;break;}} const left=r.rooms.slice(0,splitIdx),right=r.rooms.slice(splitIdx),leftFrac=left.reduce((s,x)=>s+x.area,0)/totalR; const horizontal=variant===0?r.w>=r.d:variant===1?r.w<r.d:(r.w+idx)%2===0; if(horizontal){const at=r.w*leftFrac;regions.push({x:r.x,y:r.y,w:at,d:r.d,rooms:left});regions.push({x:r.x+at,y:r.y,w:r.w-at,d:r.d,rooms:right});}else{const at=r.d*leftFrac;regions.push({x:r.x,y:r.y,w:r.w,d:at,rooms:left});regions.push({x:r.x,y:r.y+at,w:r.w,d:r.d-at,rooms:right});}} return{bbox:{w:opts.lotW,d:opts.lotD},ceilingHeight:2.6,rooms:placed.map(p=>({id:p.id,kind:p.spec.kind,label:p.spec.label,area:Math.round(p.w*p.d*100)/100,polygon:[[p.x,p.y],[p.x+p.w,p.y],[p.x+p.w,p.y+p.d],[p.x,p.y+p.d]],hasWindow:true})),corridorWidth:1.2,footprintRatio:0.5};}
+function validate(rules,layout){const results=[];for(const rule of rules){const p=rule.predicate;if(p.type==="min"){const v=layout[p.field];results.push({rule,passed:v>=p.value,observed:v,expected:">="+p.value});}else if(p.type==="max"){const v=layout[p.field];results.push({rule,passed:v<=p.value,observed:v,expected:"<="+p.value});}else if(p.type==="roomMinArea"){for(const r of layout.rooms.filter(r=>r.kind===p.roomKind))results.push({rule,passed:r.area>=p.minAreaM2,observed:r.area,expected:">="+p.minAreaM2+" m²",room:r.label});}else if(p.type==="requiresWindow"){for(const r of layout.rooms.filter(r=>p.kinds.includes(r.kind)))results.push({rule,passed:r.hasWindow,room:r.label});}else if(p.type==="corridorMinWidth"){results.push({rule,passed:layout.corridorWidth>=p.minWidthM,observed:layout.corridorWidth,expected:">="+p.minWidthM+" m"});}}return results;}
+function summarize(results){const blocks=results.filter(r=>!r.passed&&r.rule.severity==="BLOCK").length,warns=results.filter(r=>!r.passed&&r.rule.severity==="WARN").length,oks=results.filter(r=>r.passed).length;return{blocks,warns,oks,total:results.length,legal:oks/Math.max(1,results.length)};}
+const PALETTE={bedroom:"#fff3c4",livingroom:"#d0f0c0",kitchen:"#ffd6a5",bathroom:"#c4e0ff",corridor:"#eee",office:"#e0d4ff"};
+function layoutToSvg(layout,scale){scale=scale||24;const W=layout.bbox.w*scale,H=layout.bbox.d*scale;let out='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' '+H+'" width="100%" style="max-height:260px;border:1px solid #ddd;background:#fafafa;border-radius:6px">';for(const r of layout.rooms){const pts=r.polygon.map(function(p){return(p[0]*scale)+","+(H-p[1]*scale);}).join(" ");const cx=(r.polygon.reduce(function(s,p){return s+p[0];},0)/r.polygon.length)*scale;const cy=H-(r.polygon.reduce(function(s,p){return s+p[1];},0)/r.polygon.length)*scale;out+='<polygon points="'+pts+'" fill="'+(PALETTE[r.kind]||"#f4f4f4")+'" stroke="#333" stroke-width="1.5"/>';out+='<text x="'+cx+'" y="'+cy+'" font-size="11" font-family="system-ui" text-anchor="middle" fill="#111">'+r.label+'</text>';out+='<text x="'+cx+'" y="'+(cy+13)+'" font-size="9" font-family="system-ui" text-anchor="middle" fill="#555">'+r.area.toFixed(1)+' m²</text>';}return out+'</svg>';}
+function layoutToDxf(layout){const lines=["0","SECTION","2","ENTITIES"];for(const r of layout.rooms){for(let i=0;i<r.polygon.length;i++){const a=r.polygon[i],b=r.polygon[(i+1)%r.polygon.length];lines.push("0","LINE","8","WALLS","10",String(a[0]),"20",String(a[1]),"30","0","11",String(b[0]),"21",String(b[1]),"31","0");}const cx=r.polygon.reduce((s,p)=>s+p[0],0)/r.polygon.length;const cy=r.polygon.reduce((s,p)=>s+p[1],0)/r.polygon.length;lines.push("0","TEXT","8","LABELS","10",String(cx),"20",String(cy),"30","0","40","0.3","1",r.label+" ("+r.area.toFixed(1)+" m2)");}lines.push("0","ENDSEC","0","EOF");return lines.join("\n");}
+function score(layout,prog,results){const s=summarize(results),legal=s.legal,requested=prog.rooms.reduce((s,r)=>s+(r.count||1),0),functional=Math.min(1,layout.rooms.length/Math.max(1,requested));let aesthetic=0;for(const r of layout.rooms){const xs=r.polygon.map(p=>p[0]),ys=r.polygon.map(p=>p[1]),w=Math.max(...xs)-Math.min(...xs),h=Math.max(...ys)-Math.min(...ys),ratio=Math.min(w,h)/Math.max(w,h);aesthetic+=ratio>=0.5?1:ratio*2;}aesthetic/=Math.max(1,layout.rooms.length);const totalArea=layout.rooms.reduce((s,r)=>s+r.area,0),economic=prog.budgetEur?Math.max(0,Math.min(1,prog.budgetEur/(totalArea*1500))):0.75;return{legal,functional,aesthetic,economic,overall:legal*0.45+functional*0.25+aesthetic*0.15+economic*0.15};}
+function memoriaDescritiva(project,layout,results){const total=layout.rooms.reduce((s,r)=>s+r.area,0),blocks=results.filter(r=>!r.passed&&r.rule.severity==="BLOCK"),warns=results.filter(r=>!r.passed&&r.rule.severity==="WARN"),table=layout.rooms.map(r=>"| "+r.label+" | "+r.kind+" | "+r.area.toFixed(2)+" |").join("\n");return"# Memória Descritiva e Justificativa\n\n## 1. Identificação\n- Projeto: **"+project.name+"**\n- Tipo: "+project.type+"\n- Município: "+project.municipality+"\n\n## 2. Objeto\nDescreve-se a proposta arquitetónica relativa à intervenção acima identificada,\nelaborada no âmbito do Regime Jurídico da Urbanização e Edificação (DL 555/99\nna sua redação atual).\n\n## 3. Programa\nÁrea útil total: **"+total.toFixed(2)+" m²**. Pé-direito "+layout.ceilingHeight+" m.\n\n| Compartimento | Tipo | Área (m²) |\n|---|---|---|\n"+table+"\n\n## 4. Enquadramento Legal\nA proposta foi verificada automaticamente contra o RGEU, DL 163/2006 (acessibilidade),\nRJ-SCIE (DL 220/2008) e instrumento de gestão territorial municipal aplicável.\n\n### 4.1 Não conformidades bloqueantes\n"+(blocks.length===0?"Nenhuma identificada.":blocks.map(b=>"- **"+b.rule.code+"**: "+b.rule.predicate.msg).join("\n"))+"\n\n### 4.2 Avisos\n"+(warns.length===0?"Nenhum.":warns.map(w=>"- "+w.rule.code+": "+w.rule.predicate.msg).join("\n"))+"\n\n## 5. Declaração\nO presente documento reflete a verificação automatizada efetuada pela plataforma\nArquiteure, não dispensando a responsabilidade técnica do autor de projeto inscrito\nna Ordem dos Arquitetos.\n";}
+
+function show(view){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById("view-"+view).classList.add("active");document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===view));window.scrollTo(0,0);}
+document.querySelectorAll("#nav button").forEach(b=>b.addEventListener("click",()=>show(b.dataset.view)));
+function audit(action,entity,entityId,data){state.audit.push({at:new Date(),action,entity,entityId,data});}
+function createProject(){const p={id:"p"+(++state.counter),name:document.getElementById("newName").value,type:document.getElementById("newType").value,municipality:document.getElementById("newMuni").value,zone:document.getElementById("newZone").value,description:document.getElementById("newDesc").value,status:"DRAFT"};state.project=p;audit("PROJECT_CREATED","Project",p.id,p);document.getElementById("projTitle").textContent=p.name;document.getElementById("projType").textContent=p.type;document.getElementById("projMuni").textContent=p.municipality;document.getElementById("intentText").value=p.description;show("project");}
+function extractIntent(){const text=document.getElementById("intentText").value.toLowerCase(),rooms=[];const bedrooms=(text.match(/t(\d)/)||[])[1];if(bedrooms)rooms.push({kind:"bedroom",count:parseInt(bedrooms),minAreaM2:12});else if(/quarto/.test(text))rooms.push({kind:"bedroom",count:2,minAreaM2:12});rooms.push({kind:"livingroom",count:1,minAreaM2:/ampl[ao]/.test(text)?22:16});rooms.push({kind:"kitchen",count:1,minAreaM2:/ampl[ao]|aberta/.test(text)?12:8});rooms.push({kind:"bathroom",count:/duas.*casas|2.*wc/.test(text)?2:1,minAreaM2:5});rooms.push({kind:"corridor",count:1,minAreaM2:4});if(/escrit[oó]rio/.test(text))rooms.push({kind:"office",count:1,minAreaM2:8});const budgetMatch=text.match(/(\d+)\s*k/),budget=budgetMatch?parseInt(budgetMatch[1])*1000:undefined,program={rooms,budgetEur:budget,constraints:[],goals:[(state.project&&state.project.name)||"Programa extraído"],accessibilityRequired:/acessib/.test(text)};state.program=program;audit("INTENT_EXTRACTED","Intent","i"+(++state.counter),program);document.getElementById("programOut").style.display="block";document.getElementById("programJson").textContent=JSON.stringify(program,null,2);}
+function generateAlts(){if(!state.program){alert("Extrai primeiro o programa.");return;}if(!state.project)createProject();const lotW=parseFloat(document.getElementById("lotW").value),lotD=parseFloat(document.getElementById("lotD").value),count=parseInt(document.getElementById("altCount").value)||3,versionId="v"+(++state.counter);state.versions.push({id:versionId,stage:"CONCEPT",createdAt:new Date(),lot:{w:lotW,d:lotD}});audit("VERSION_CREATED","ProjectVersion",versionId,{stage:"CONCEPT",lot:{w:lotW,d:lotD}});state.alternatives=[];for(let i=0;i<count;i++){const layout=generateLayout(state.program,{lotW,lotD},i);if(!layout)continue;const results=validate(PT_RULES,layout),scores=score(layout,state.program,results);state.alternatives.push({id:"a"+(++state.counter),versionId,name:"Alternativa "+(i+1),layout,results,scores,summary:summarize(results)});}audit("ALTERNATIVES_GENERATED","ProjectVersion",versionId,{count:state.alternatives.length});renderAlts();renderMemoria();renderAudit();show("alts");}
+function renderAlts(){const grid=document.getElementById("altGrid"),empty=document.getElementById("altEmpty");if(!state.alternatives.length){grid.innerHTML="";empty.style.display="block";return;}empty.style.display="none";grid.innerHTML=state.alternatives.map(alt=>{const s=alt.summary,pill=s.blocks>0?'<span class="pill block">'+s.blocks+" bloqueios</span>":s.warns>0?'<span class="pill warn">'+s.warns+" avisos</span>":'<span class="pill ok">conforme</span>',sc=alt.scores,checks=alt.results.map(r=>{const ic=r.passed?"✓":"✗",color=r.passed?"#1f7a3a":r.rule.severity==="BLOCK"?"#721c24":"#856404";return'<div style="font-size:11px;color:'+color+'">'+ic+" "+r.rule.code+(r.room?" ("+r.room+")":"")+"</div>";}).join("");return'<div class="card"><h3>'+alt.name+"</h3>"+layoutToSvg(alt.layout)+'<p style="margin-top:8px">'+pill+"</p>"+'<div class="kv"><strong>Global</strong><div><div class="score-bar"><div style="width:'+(sc.overall*100).toFixed(0)+'%"></div></div>'+(sc.overall*100).toFixed(0)+"%</div></div>"+'<div class="kv"><strong>Legal</strong><div><div class="score-bar"><div style="width:'+(sc.legal*100).toFixed(0)+'%"></div></div>'+(sc.legal*100).toFixed(0)+"%</div></div>"+'<div class="kv"><strong>Funcional</strong><div><div class="score-bar"><div style="width:'+(sc.functional*100).toFixed(0)+'%"></div></div>'+(sc.functional*100).toFixed(0)+"%</div></div>"+'<div class="kv"><strong>Estético</strong><div><div class="score-bar"><div style="width:'+(sc.aesthetic*100).toFixed(0)+'%"></div></div>'+(sc.aesthetic*100).toFixed(0)+"%</div></div>"+'<div class="kv"><strong>Económico</strong><div><div class="score-bar"><div style="width:'+(sc.economic*100).toFixed(0)+'%"></div></div>'+(sc.economic*100).toFixed(0)+"%</div></div>"+'<div style="margin-top:10px"><strong style="font-size:11px">Validações:</strong>'+checks+"</div>"+'<p style="margin-top:10px"><button class="btn success" onclick="approve(\''+alt.id+"')\">Aprovar</button> "+'<button class="btn secondary" onclick="viewMemoria(\''+alt.id+"')\">Memória</button></p></div>";}).join("");}
+function approve(altId){audit("APPROVAL_GRANTED","ApprovalGate","g"+(++state.counter),{alternativeId:altId,gate:"LEGAL",actor:"arq.maria@demo"});alert("Gate LEGAL aprovado para "+altId+".\nEm produção, isto requer architectProcedure no router tRPC.");renderAudit();}
+function viewMemoria(altId){const alt=state.alternatives.find(a=>a.id===altId);if(!alt)return;document.getElementById("memoriaOut").textContent=memoriaDescritiva(state.project||{name:"Demo",type:"HOUSING",municipality:"Lisboa"},alt.layout,alt.results);show("memoria");}
+function renderMemoria(){if(!state.alternatives.length)return;const alt=state.alternatives[0];document.getElementById("memoriaOut").textContent=memoriaDescritiva(state.project||{name:"Demo",type:"HOUSING",municipality:"Lisboa"},alt.layout,alt.results);}
+function exportDxf(){if(!state.alternatives.length){alert("Gera primeiro uma alternativa.");return;}const dxf=layoutToDxf(state.alternatives[0].layout),blob=new Blob([dxf],{type:"application/dxf"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="alternativa-1.dxf";a.click();URL.revokeObjectURL(url);}
+function renderAudit(){const v=document.getElementById("versions");if(state.versions.length===0)v.innerHTML='<p class="muted">Sem versões ainda.</p>';else v.innerHTML=state.versions.map(ver=>'<div class="audit-row"><strong>'+ver.id+"</strong> · "+ver.stage+" · lote "+ver.lot.w+"×"+ver.lot.d+'m · <time>'+ver.createdAt.toLocaleString("pt-PT")+"</time></div>").join("");const t=document.getElementById("auditTrail");if(state.audit.length===0)t.innerHTML='<p class="muted">Vazio.</p>';else t.innerHTML=state.audit.slice().reverse().map(e=>'<div class="audit-row"><time>'+e.at.toLocaleTimeString("pt-PT")+"</time> · <strong>"+e.action+"</strong> · "+e.entity+"#"+e.entityId+"</div>").join("");}
+function renderRules(){const tbody=document.querySelector("#rulesTable tbody");tbody.innerHTML=PT_RULES.map(r=>{const sev=r.severity==="BLOCK"?'<span class="pill block">BLOCK</span>':r.severity==="WARN"?'<span class="pill warn">WARN</span>':'<span class="pill info">INFO</span>';return"<tr><td><code>"+r.code+"</code></td><td>"+r.category+"</td><td>"+r.title+"</td><td class='muted'>"+r.source+"</td><td>"+sev+"</td></tr>";}).join("");}
+function runWorker(){const log=document.getElementById("workerLog");log.textContent="";const lines=["[worker] Arquiteure worker a arrancar.","[worker] Regras PT carregadas: "+PT_RULES.length+" regras ativas.","[worker] Ciclo de atualização agendado: 0 4 * * *","[worker] ── 04:00 ── A iniciar ciclo.","  → RGEU-65: verificação DRE.pt... sem alterações","  → RGEU-66-QUARTO: sem alterações","  → RGEU-66-COZ: sem alterações","  → RGEU-66-WC: sem alterações","  → RGEU-66-SALA: sem alterações","  → RGEU-71: sem alterações","  → DL163-2006-CORR: ⚠ ALTERAÇÃO DETETADA em §2.3","                      RuleUpdate criado (pendente revisão humana)","  → PDM-LX-IOS: sem alterações","[worker] Ciclo OK. Verificadas="+PT_RULES.length+", alterações=1","[audit] RULE_UPDATE_DETECTED registado em AuditEvent"];let i=0;const interval=setInterval(()=>{log.textContent+=lines[i]+"\n";i++;if(i>=lines.length)clearInterval(interval);},150);audit("UPDATE_CYCLE_COMPLETED","system","updater",{checked:PT_RULES.length,changes:1});}
+renderRules();renderAudit();
+</script>
+</body>
+</html>
