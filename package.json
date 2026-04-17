@@ -16,6 +16,9 @@
     "seed": "tsx scripts/seed-knowledge.ts",
     "worker:update-knowledge": "tsx scripts/update-knowledge.ts"
   },
+  "dependencies": {
+    "@prisma/client": "^5.16.0"
+  },
   "devDependencies": {
     "@types/node": "^20.11.0",
     "prisma": "^5.16.0",
