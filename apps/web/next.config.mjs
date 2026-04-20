@@ -17,5 +17,12 @@ const config = {
     "@arquiteure/drawing",
     "@arquiteure/exporter",
   ],
+  webpack(config) {
+    config.resolve.extensionAlias = {
+      ".js": [".ts", ".tsx", ".js", ".jsx"],
+      ".jsx": [".tsx", ".jsx"],
+    };
+    return config;
+  },
 };
 export default config;
