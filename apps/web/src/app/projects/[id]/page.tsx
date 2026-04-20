@@ -12,9 +12,8 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
   const [lotW, setLotW] = useState(10);
   const [lotD, setLotD] = useState(8);
   const [lastProgram, setLastProgram] = useState<unknown>(null);
-  const [alternatives, setAlternatives] = useState<
-    Awaited<ReturnType<typeof design.mutateAsync>>["alternatives"]
-  >([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [alternatives, setAlternatives] = useState<any[]>([]);
 
   if (!project) return <p>A carregar…</p>;
 
