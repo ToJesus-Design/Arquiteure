@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { trpc } from "@/lib/trpc";
 
 export default function ProjectPage({ params }: { params: { id: string } }) {
@@ -19,12 +20,17 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
 
   return (
     <div>
-      <div className="card">
-        <h1>{project.name}</h1>
-        <p>
-          {project.type} · {project.municipality ?? "—"} · <em>{project.status}</em>
-        </p>
-        <p>{project.description}</p>
+      <div className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <h1 style={{ margin: "0 0 4px" }}>{project.name}</h1>
+          <p style={{ margin: 0 }}>
+            {project.type} · {project.municipality ?? "—"} · <em>{project.status}</em>
+          </p>
+          <p style={{ margin: "4px 0 0" }}>{project.description}</p>
+        </div>
+        <Link href={`/projects/${project.id}/notebook`} className="btn secondary" style={{ textDecoration: "none", whiteSpace: "nowrap" }}>
+          NotebookLM
+        </Link>
       </div>
 
       <div className="card">
