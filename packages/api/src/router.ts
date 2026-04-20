@@ -11,6 +11,8 @@ import { rulesForProjectType } from "@arquiteure/knowledge";
 import { layoutToSvg } from "@arquiteure/drawing";
 import { generateDossierPdf, memoriaDescritiva, layoutToDxf } from "@arquiteure/exporter";
 import { ProgramRequirementsSchema } from "@arquiteure/core";
+import { queryNotebook } from "@arquiteure/notebooklm";
+import type { NotebookSource } from "@arquiteure/notebooklm";
 
 const ProjectTypeZ = z.enum([
   "REMODEL",
@@ -294,6 +296,150 @@ export const appRouter = router({
         const dxf = layoutToDxf(alt.layoutJson as unknown as import("@arquiteure/core").Layout);
         return { dxf };
       }),
+  }),
+
+  // NotebookLM — Q&A fundamentado em documentos do projeto
+  notebook: router({
+    create: authedProcedure
+      .input(
+        z.object({
+          projectId: z.string(),
+          name: z.string().min(1),
+          description: z.string().optional(),
+        }),
+      )
+      .mutation(async ({ input, ctx }) => {
+        const nb = await prisma.notebook.create({
+          data: {
+            projectId: input.projectId,
+            name: input.name,
+            description: input.description,
+          },
+        });
+        await audit({
+          actor: ctx.userId!,
+          action: "NOTEBOOK_CREATED",
+          entity: "Notebook",
+          entityId: nb.id,
+          after: nb,
+        });
+        return nb;
+      }),
+
+    list: authedProcedure
+      .input(z.object({ projectId: z.string() }))
+      .query(({ input }) =>
+        prisma.notebook.findMany({
+          where: { projectId: input.projectId },
+          orderBy: { createdAt: "desc" },
+          include: { _count: { select: { sources: true, entries: true } } },
+        }),
+      ),
+
+    get: authedProcedure
+      .input(z.object({ id: z.string() }))
+      .query(({ input }) =>
+        prisma.notebook.findUniqueOrThrow({
+          where: { id: input.id },
+          include: {
+            sources: { orderBy: { createdAt: "asc" } },
+            entries: { orderBy: { createdAt: "desc" } },
+          },
+        }),
+      ),
+
+    addSource: authedProcedure
+      .input(
+        z.object({
+          notebookId: z.string(),
+          title: z.string().min(1),
+          contentMd: z.string().min(1),
+          kind: z.enum(["text", "regulation", "project_doc"]).default("text"),
+        }),
+      )
+      .mutation(async ({ input, ctx }) => {
+        const src = await prisma.notebookSource.create({
+          data: {
+            notebookId: input.notebookId,
+            title: input.title,
+            contentMd: input.contentMd,
+            kind: input.kind,
+          },
+        });
+        await audit({
+          actor: ctx.userId!,
+          action: "NOTEBOOK_SOURCE_ADDED",
+          entity: "NotebookSource",
+          entityId: src.id,
+          after: { title: src.title, kind: src.kind },
+        });
+        return src;
+      }),
+
+    removeSource: authedProcedure
+      .input(z.object({ sourceId: z.string() }))
+      .mutation(async ({ input, ctx }) => {
+        const src = await prisma.notebookSource.delete({ where: { id: input.sourceId } });
+        await audit({
+          actor: ctx.userId!,
+          action: "NOTEBOOK_SOURCE_REMOVED",
+          entity: "NotebookSource",
+          entityId: src.id,
+          before: { title: src.title },
+        });
+        return { ok: true };
+      }),
+
+    ask: authedProcedure
+      .input(
+        z.object({
+          notebookId: z.string(),
+          question: z.string().min(1),
+        }),
+      )
+      .mutation(async ({ input, ctx }) => {
+        const nb = await prisma.notebook.findUniqueOrThrow({
+          where: { id: input.notebookId },
+          include: { sources: true },
+        });
+
+        const sources: NotebookSource[] = nb.sources.map((s) => ({
+          id: s.id,
+          title: s.title,
+          contentMd: s.contentMd,
+          kind: s.kind as NotebookSource["kind"],
+        }));
+
+        const result = await queryNotebook(input.question, sources);
+
+        const entry = await prisma.notebookEntry.create({
+          data: {
+            notebookId: input.notebookId,
+            question: input.question,
+            answer: result.answer,
+            citationsJson: result.citations as unknown as object[],
+          },
+        });
+
+        await audit({
+          actor: ctx.userId!,
+          action: "NOTEBOOK_QUERIED",
+          entity: "NotebookEntry",
+          entityId: entry.id,
+          after: { question: input.question, citationCount: result.citations.length },
+        });
+
+        return { entry, citations: result.citations };
+      }),
+
+    listEntries: authedProcedure
+      .input(z.object({ notebookId: z.string() }))
+      .query(({ input }) =>
+        prisma.notebookEntry.findMany({
+          where: { notebookId: input.notebookId },
+          orderBy: { createdAt: "desc" },
+        }),
+      ),
   }),
 });
 
