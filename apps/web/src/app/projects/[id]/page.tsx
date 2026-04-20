@@ -2,6 +2,13 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 
+type DesignAlternative = {
+  id: string;
+  name: string;
+  svgPreview: string | null;
+  scoreJson: unknown;
+};
+
 export default function ProjectPage({ params }: { params: { id: string } }) {
   const { data: project, refetch } = trpc.project.get.useQuery({ id: params.id });
   const intent = trpc.intent.fromText.useMutation();
@@ -11,9 +18,7 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
   const [lotW, setLotW] = useState(10);
   const [lotD, setLotD] = useState(8);
   const [lastProgram, setLastProgram] = useState<unknown>(null);
-  const [alternatives, setAlternatives] = useState<
-    Awaited<ReturnType<typeof design.mutateAsync>>["alternatives"]
-  >([]);
+  const [alternatives, setAlternatives] = useState<DesignAlternative[]>([]);
 
   if (!project) return <p>A carregar…</p>;
 
