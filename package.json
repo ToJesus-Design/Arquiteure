@@ -22,5 +22,8 @@
     "tsx": "^4.16.0",
     "typescript": "^5.4.5",
     "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "@prisma/client": "5.22.0"
   }
 }
