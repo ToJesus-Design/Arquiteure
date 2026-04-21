@@ -10,7 +10,7 @@ function openai(): OpenAI {
 
 /** Whisper STT — transcrição de ficheiros áudio. */
 export async function transcribeAudio(fileBuffer: Buffer, filename: string): Promise<string> {
-  const file = new File([fileBuffer], filename, { type: "audio/mpeg" });
+  const file = new File([new Uint8Array(fileBuffer)], filename, { type: "audio/mpeg" });
   const res = await openai().audio.transcriptions.create({
     file,
     model: "whisper-1",

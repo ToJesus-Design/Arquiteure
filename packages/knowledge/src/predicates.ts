@@ -7,9 +7,11 @@ export type Predicate =
   | MinPredicate
   | MaxPredicate
   | RoomMinAreaPredicate
+  | RoomMinDimensionPredicate
   | RequiresAccessRoutePredicate
   | RequiresWindowPredicate
-  | UseAllowedPredicate;
+  | UseAllowedPredicate
+  | MinDoorWidthPredicate;
 
 export interface PredicateBase {
   ruleCode: string;
@@ -51,4 +53,15 @@ export interface UseAllowedPredicate extends PredicateBase {
   type: "useAllowed";
   zone: string;
   allowedTypes: string[];
+}
+
+export interface RoomMinDimensionPredicate extends PredicateBase {
+  type: "roomMinDimension";
+  roomKind: string;
+  minDimensionM: number;
+}
+
+export interface MinDoorWidthPredicate extends PredicateBase {
+  type: "minDoorWidth";
+  minWidthM: number;
 }

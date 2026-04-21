@@ -22,10 +22,15 @@ export interface RuleLike {
  * Avalia um conjunto de regras (cada uma com um Predicate em machineJson)
  * contra o contexto fornecido. Devolve uma lista de ValidationResult.
  */
+function isPredicate(x: unknown): x is Predicate {
+  return typeof x === "object" && x !== null && typeof (x as Record<string, unknown>).type === "string";
+}
+
 export function validate(rules: RuleLike[], ctx: ValidationContext): ValidationResult[] {
   const results: ValidationResult[] = [];
   for (const rule of rules) {
-    const pred = rule.machineJson as Predicate;
+    const pred = isPredicate(rule.machineJson) ? rule.machineJson : null;
+    if (!pred) continue;
     if (pred.appliesTo && !pred.appliesTo.includes(ctx.projectType)) continue;
     results.push(...evaluate(rule, pred, ctx));
   }
@@ -40,12 +45,16 @@ function evaluate(rule: RuleLike, pred: Predicate, ctx: ValidationContext): Vali
       return [evalMax(rule, pred, ctx)];
     case "roomMinArea":
       return evalRoomMinArea(rule, pred, ctx);
+    case "roomMinDimension":
+      return evalRoomMinDimension(rule, pred, ctx);
     case "requiresWindow":
       return evalRequiresWindow(rule, pred, ctx);
     case "requiresAccessRoute":
       return [evalAccessRoute(rule, pred, ctx)];
     case "useAllowed":
       return [evalUseAllowed(rule, pred, ctx)];
+    case "minDoorWidth":
+      return evalMinDoorWidth(rule, pred, ctx);
   }
 }
 
@@ -175,6 +184,57 @@ function evalUseAllowed(
     severity: pred.severity,
     message: passed ? `OK: tipo ${ctx.projectType} permitido em ${pred.zone}.` : pred.message,
   };
+}
+
+function evalRoomMinDimension(
+  rule: RuleLike,
+  pred: Extract<Predicate, { type: "roomMinDimension" }>,
+  ctx: ValidationContext,
+): ValidationResult[] {
+  const matching = ctx.layout.rooms.filter((r) => r.kind === pred.roomKind);
+  if (matching.length === 0) return [];
+  return matching.map((r) => {
+    const xs = r.polygon.map((p) => p[0]);
+    const ys = r.polygon.map((p) => p[1]);
+    const w = Math.max(...xs) - Math.min(...xs);
+    const h = Math.max(...ys) - Math.min(...ys);
+    const minDim = Math.min(w, h);
+    const passed = minDim >= pred.minDimensionM;
+    return {
+      ruleId: rule.id,
+      ruleCode: rule.code,
+      passed,
+      severity: pred.severity,
+      message: passed
+        ? `OK: ${r.label} dimensão mínima ${minDim.toFixed(2)} m.`
+        : `${pred.message} (${r.label}: ${minDim.toFixed(2)} m)`,
+      observed: minDim,
+      expected: `≥ ${pred.minDimensionM} m`,
+    };
+  });
+}
+
+function evalMinDoorWidth(
+  rule: RuleLike,
+  pred: Extract<Predicate, { type: "minDoorWidth" }>,
+  ctx: ValidationContext,
+): ValidationResult[] {
+  const doors = ctx.layout.openings.filter((o) => o.kind === "DOOR");
+  if (doors.length === 0) return [];
+  return doors.map((d) => {
+    const passed = d.widthM >= pred.minWidthM;
+    return {
+      ruleId: rule.id,
+      ruleCode: rule.code,
+      passed,
+      severity: pred.severity,
+      message: passed
+        ? `OK: porta com largura ${d.widthM} m.`
+        : `${pred.message} (porta: ${d.widthM.toFixed(2)} m)`,
+      observed: d.widthM,
+      expected: `≥ ${pred.minWidthM} m`,
+    };
+  });
 }
 
 function wallTouchesRoom(

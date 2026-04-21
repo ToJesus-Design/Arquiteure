@@ -162,6 +162,9 @@ importers:
       '@trpc/server':
         specifier: ^10.45.2
         version: 10.45.4
+      superjson:
+        specifier: ^2.2.1
+        version: 2.2.6
       zod:
         specifier: ^3.23.8
         version: 3.25.76

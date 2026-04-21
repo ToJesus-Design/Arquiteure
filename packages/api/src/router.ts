@@ -10,7 +10,7 @@ import { validate, summarize } from "@arquiteure/validator";
 import { rulesForProjectType } from "@arquiteure/knowledge";
 import { layoutToSvg } from "@arquiteure/drawing";
 import { generateDossierPdf, memoriaDescritiva, layoutToDxf } from "@arquiteure/exporter";
-import { ProgramRequirementsSchema } from "@arquiteure/core";
+import { ProgramRequirementsSchema, LayoutSchema } from "@arquiteure/core";
 
 const ProjectTypeZ = z.enum([
   "REMODEL",
@@ -196,7 +196,7 @@ export const appRouter = router({
               name: `Alternativa ${i + 1}`,
               descriptionMd: `Gerada automaticamente (variante ${i}).`,
               layoutJson: layout as object,
-              scoreJson: { scores, validationSummary: summarize(validations) } as object,
+              scoreJson: { scores, validationSummary: summarize(validations), validations } as object,
               svgPreview: svg,
             },
           });
@@ -214,6 +214,15 @@ export const appRouter = router({
 
   // Aprovações
   approval: router({
+    listGates: authedProcedure
+      .input(z.object({ versionId: z.string() }))
+      .query(({ input }) =>
+        prisma.approvalGate.findMany({
+          where: { versionId: input.versionId },
+          orderBy: { gate: "asc" },
+        }),
+      ),
+
     approve: architectProcedure
       .input(
         z.object({
@@ -261,7 +270,7 @@ export const appRouter = router({
           where: { id: input.alternativeId },
           include: { version: { include: { project: true } } },
         });
-        const layout = alt.layoutJson as unknown as import("@arquiteure/core").Layout;
+        const layout = LayoutSchema.parse(alt.layoutJson);
         const rules = await rulesForProjectType(alt.version.project.type);
         const validations = validate(rules, {
           projectType: alt.version.project.type,
@@ -291,9 +300,22 @@ export const appRouter = router({
       .input(z.object({ alternativeId: z.string() }))
       .mutation(async ({ input }) => {
         const alt = await prisma.alternative.findUniqueOrThrow({ where: { id: input.alternativeId } });
-        const dxf = layoutToDxf(alt.layoutJson as unknown as import("@arquiteure/core").Layout);
+        const dxf = layoutToDxf(LayoutSchema.parse(alt.layoutJson));
         return { dxf };
       }),
+  }),
+
+  // Conhecimento
+  knowledge: router({
+    listUpdates: authedProcedure
+      .input(z.object({ limit: z.number().int().min(1).max(100).default(50) }))
+      .query(({ input }) =>
+        prisma.ruleUpdate.findMany({
+          orderBy: { fetchedAt: "desc" },
+          take: input.limit,
+          include: { rule: { select: { code: true, title: true } } },
+        }),
+      ),
   }),
 });
 

@@ -41,10 +41,19 @@ function aestheticScore(layout: Layout): number {
   return acc / layout.rooms.length;
 }
 
+const COST_PER_M2: Record<string, number> = {
+  NEW_BUILD: 1500,
+  HOUSING: 1450,
+  EXTENSION: 1200,
+  REMODEL: 900,
+  MIXED_USE: 1300,
+  INDUSTRIAL: 750,
+};
+
 function economicScore(layout: Layout, program: ProgramRequirements): number {
   const totalArea = layout.rooms.reduce((s, r) => s + r.areaM2, 0);
   if (!program.budgetEur) return 0.75;
-  const costPerM2 = 1500; // construção nova PT — heurística
+  const costPerM2 = COST_PER_M2[(layout as unknown as { projectType?: string }).projectType ?? "NEW_BUILD"] ?? 1200;
   const estimatedCost = totalArea * costPerM2;
   if (estimatedCost <= program.budgetEur) return 1;
   return Math.max(0, 1 - (estimatedCost - program.budgetEur) / program.budgetEur);
