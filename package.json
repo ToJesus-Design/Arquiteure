@@ -14,6 +14,7 @@
     "db:push": "prisma db push --schema prisma/schema.prisma",
     "db:generate": "prisma generate --schema prisma/schema.prisma",
     "seed": "tsx scripts/seed-knowledge.ts",
+    "seed:music": "tsx scripts/seed-music.ts",
     "worker:update-knowledge": "tsx scripts/update-knowledge.ts"
   },
   "devDependencies": {

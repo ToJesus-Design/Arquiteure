@@ -11,6 +11,7 @@ import { rulesForProjectType } from "@arquiteure/knowledge";
 import { layoutToSvg } from "@arquiteure/drawing";
 import { generateDossierPdf, memoriaDescritiva, layoutToDxf } from "@arquiteure/exporter";
 import { ProgramRequirementsSchema } from "@arquiteure/core";
+import { MusicIdentifier } from "@arquiteure/music";
 
 const ProjectTypeZ = z.enum([
   "REMODEL",
@@ -294,6 +295,96 @@ export const appRouter = router({
         const dxf = layoutToDxf(alt.layoutJson as unknown as import("@arquiteure/core").Layout);
         return { dxf };
       }),
+  }),
+
+  // Música
+  music: router({
+    listPosts: publicProcedure.query(() =>
+      prisma.musicPost.findMany({ orderBy: { createdAt: "desc" } }),
+    ),
+
+    getPost: publicProcedure
+      .input(z.object({ id: z.string() }))
+      .query(({ input }) =>
+        prisma.musicPost.findUniqueOrThrow({ where: { id: input.id } }),
+      ),
+
+    likePost: authedProcedure
+      .input(z.object({ postId: z.string() }))
+      .mutation(async ({ input, ctx }) => {
+        const post = await prisma.musicPost.findUniqueOrThrow({ where: { id: input.postId } });
+
+        // Reconhecimento: áudio → ACRCloud, fallback → metadados
+        const identifier = new MusicIdentifier();
+        const result = await identifier.identify({
+          title: post.title,
+          artist: post.artist ?? undefined,
+          audioUrl: post.audioUrl ?? undefined,
+        });
+
+        const spotifyLink = result.links.find((l) => l.platform === "spotify") ?? null;
+
+        const like = await prisma.musicLike.upsert({
+          where: { postId_userId: { postId: input.postId, userId: ctx.userId! } },
+          create: {
+            postId: input.postId,
+            userId: ctx.userId!,
+            recognitionJson: result.recognition as object,
+            spotifyUrl: spotifyLink?.url ?? null,
+            spotifyTrackId: spotifyLink?.trackId ?? null,
+            coverUrl: spotifyLink?.coverUrl ?? null,
+            previewUrl: spotifyLink?.previewUrl ?? null,
+          },
+          update: {
+            likedAt: new Date(),
+            recognitionJson: result.recognition as object,
+            spotifyUrl: spotifyLink?.url ?? null,
+            spotifyTrackId: spotifyLink?.trackId ?? null,
+            coverUrl: spotifyLink?.coverUrl ?? null,
+            previewUrl: spotifyLink?.previewUrl ?? null,
+          },
+        });
+
+        await audit({
+          actor: ctx.userId!,
+          action: "MUSIC_POST_LIKED",
+          entity: "MusicLike",
+          entityId: like.id,
+          after: { postId: input.postId, recognition: result.recognition, spotifyUrl: spotifyLink?.url },
+        });
+
+        return {
+          like,
+          recognition: result.recognition,
+          links: result.links,
+          bestLink: result.bestLink,
+        };
+      }),
+
+    unlikePost: authedProcedure
+      .input(z.object({ postId: z.string() }))
+      .mutation(async ({ input, ctx }) => {
+        await prisma.musicLike.deleteMany({
+          where: { postId: input.postId, userId: ctx.userId! },
+        });
+        return { unliked: true };
+      }),
+
+    myLikes: authedProcedure.query(({ ctx }) =>
+      prisma.musicLike.findMany({
+        where: { userId: ctx.userId! },
+        include: { post: true },
+        orderBy: { likedAt: "desc" },
+      }),
+    ),
+
+    getLikeStatus: authedProcedure
+      .input(z.object({ postId: z.string() }))
+      .query(({ input, ctx }) =>
+        prisma.musicLike.findUnique({
+          where: { postId_userId: { postId: input.postId, userId: ctx.userId! } },
+        }),
+      ),
   }),
 });
 

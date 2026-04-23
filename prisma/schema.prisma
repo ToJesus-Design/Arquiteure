@@ -211,3 +211,33 @@ model ApprovalGate {
   grantedAt   DateTime?
   notes       String?
 }
+
+// ─── Music ───────────────────────────────────────────────────────────────────
+
+model MusicPost {
+  id          String      @id @default(cuid())
+  title       String
+  artist      String?
+  description String?
+  audioUrl    String?
+  coverUrl    String?
+  tags        String[]
+  createdAt   DateTime    @default(now())
+  likes       MusicLike[]
+}
+
+model MusicLike {
+  id              String    @id @default(cuid())
+  postId          String
+  post            MusicPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId          String
+  likedAt         DateTime  @default(now())
+  recognitionJson Json?
+  spotifyUrl      String?
+  spotifyTrackId  String?
+  coverUrl        String?
+  previewUrl      String?
+
+  @@unique([postId, userId])
+  @@index([userId])
+}

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -15,6 +16,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <header className="hdr">
             <strong>Arquiteure</strong>
             <span className="tag">arquitetura · engenharia · urbanismo</span>
+            <nav className="hdr-nav">
+              <Link href="/projects">Projetos</Link>
+              <Link href="/music">Música</Link>
+            </nav>
           </header>
           <main>{children}</main>
         </Providers>

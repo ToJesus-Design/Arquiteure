@@ -14,6 +14,9 @@ body {
   align-items: baseline;
 }
 .hdr .tag { opacity: 0.6; font-size: 13px; }
+.hdr-nav { margin-left: auto; display: flex; gap: 16px; }
+.hdr-nav a { color: #ccc; text-decoration: none; font-size: 14px; }
+.hdr-nav a:hover { color: #fff; }
 main { padding: 24px; max-width: 1100px; margin: 0 auto; }
 .card { background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #e3e3e5; margin-bottom: 16px; }
 .btn { background: #111; color: #fff; border: 0; padding: 8px 14px; border-radius: 6px; cursor: pointer; }
