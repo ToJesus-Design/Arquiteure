@@ -16,6 +16,13 @@ const config = {
     "@arquiteure/knowledge",
     "@arquiteure/drawing",
     "@arquiteure/exporter",
+    "@arquiteure/music",
   ],
+  webpack(config) {
+    config.resolve.extensionAlias = {
+      ".js": [".ts", ".tsx", ".js", ".jsx"],
+    };
+    return config;
+  },
 };
 export default config;
