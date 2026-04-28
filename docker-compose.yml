@@ -8,9 +8,11 @@ services:
       POSTGRES_DB: arquiteure
     ports: ["5432:5432"]
     volumes: [pgdata:/var/lib/postgresql/data]
+
   redis:
     image: redis:7-alpine
     ports: ["6379:6379"]
+
   minio:
     image: minio/minio:latest
     command: server /data --console-address ":9001"
@@ -19,6 +21,37 @@ services:
       MINIO_ROOT_PASSWORD: minioadmin
     ports: ["9000:9000", "9001:9001"]
     volumes: [miniodata:/data]
+
+  # ── IA Gratuita: Ollama (sem API key) ────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    ports: ["11434:11434"]
+    volumes: [ollama_models:/root/.ollama]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # Puxa o modelo automaticamente na primeira inicialização
+  ollama-init:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: >
+      sh -c "
+        echo 'A verificar modelo llama3.1:8b…' &&
+        ollama pull llama3.1:8b &&
+        echo 'Modelo pronto.'
+      "
+    restart: "no"
+
 volumes:
   pgdata:
   miniodata:
+  ollama_models:

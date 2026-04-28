@@ -3,6 +3,29 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc";
 
+function ProviderBanner() {
+  const { data, isLoading } = trpc.isoConsultant.providerStatus.useQuery(undefined, { retry: false });
+  if (isLoading) return null;
+  if (!data) return null;
+  if (data.ok) {
+    return (
+      <div style={{ padding: "6px 12px", background: "#d4edda", borderRadius: 6, fontSize: 12, color: "#155724", marginBottom: 12, display: "inline-flex", gap: 8, alignItems: "center" }}>
+        <span>●</span>
+        <span>IA pronta — <strong>{data.provider}</strong> · {data.model}</span>
+      </div>
+    );
+  }
+  return (
+    <div style={{ padding: "10px 14px", background: "#fff3cd", borderRadius: 6, fontSize: 13, color: "#856404", marginBottom: 12 }}>
+      <strong>Ollama não acessível:</strong> {data.error}
+      <br />
+      <span style={{ fontSize: 12 }}>
+        Inicie com <code style={{ background: "#ffe8a1", padding: "1px 4px", borderRadius: 3 }}>docker-compose up ollama ollama-init</code> ou instale o <a href="https://ollama.com" target="_blank" rel="noreferrer" style={{ color: "#856404" }}>Ollama</a> localmente e execute <code style={{ background: "#ffe8a1", padding: "1px 4px", borderRadius: 3 }}>ollama pull llama3.1:8b</code>.
+      </span>
+    </div>
+  );
+}
+
 const NORMAS = [
   "ISO 9001 – Qualidade",
   "ISO 22000 – Segurança Alimentar",
@@ -58,6 +81,7 @@ export default function IsoConsultantPage() {
 
   return (
     <div>
+      <ProviderBanner />
       <div className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h1 style={{ margin: 0 }}>Consultor ISO</h1>

@@ -11,7 +11,7 @@ import { rulesForProjectType } from "@arquiteure/knowledge";
 import { layoutToSvg } from "@arquiteure/drawing";
 import { generateDossierPdf, memoriaDescritiva, layoutToDxf } from "@arquiteure/exporter";
 import { ProgramRequirementsSchema } from "@arquiteure/core";
-import { chatCompletion } from "@arquiteure/iso-consultant";
+import { chatCompletion, checkHealth, resolveProvider } from "@arquiteure/iso-consultant";
 
 const ProjectTypeZ = z.enum([
   "REMODEL",
@@ -299,6 +299,13 @@ export const appRouter = router({
 
   // ── Consultor ISO ────────────────────────────────────────────────────────────
   isoConsultant: router({
+    providerStatus: publicProcedure.query(async () => {
+      const provider = resolveProvider();
+      // For Groq we skip the Ollama-specific /api/tags check
+      if (provider.name === "groq") return { ok: true, provider: "groq", model: provider.model };
+      return checkHealth();
+    }),
+
     createConversation: authedProcedure
       .input(
         z.object({
