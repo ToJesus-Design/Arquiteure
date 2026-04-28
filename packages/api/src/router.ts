@@ -11,6 +11,7 @@ import { rulesForProjectType } from "@arquiteure/knowledge";
 import { layoutToSvg } from "@arquiteure/drawing";
 import { generateDossierPdf, memoriaDescritiva, layoutToDxf } from "@arquiteure/exporter";
 import { ProgramRequirementsSchema } from "@arquiteure/core";
+import { chatCompletion } from "@arquiteure/iso-consultant";
 
 const ProjectTypeZ = z.enum([
   "REMODEL",
@@ -293,6 +294,124 @@ export const appRouter = router({
         const alt = await prisma.alternative.findUniqueOrThrow({ where: { id: input.alternativeId } });
         const dxf = layoutToDxf(alt.layoutJson as unknown as import("@arquiteure/core").Layout);
         return { dxf };
+      }),
+  }),
+
+  // ── Consultor ISO ────────────────────────────────────────────────────────────
+  isoConsultant: router({
+    createConversation: authedProcedure
+      .input(
+        z.object({
+          title: z.string().optional(),
+          norm: z.string().optional(),
+          industry: z.string().optional(),
+          companySize: z.string().optional(),
+          maturityLevel: z.string().optional(),
+        }),
+      )
+      .mutation(({ input, ctx }) =>
+        prisma.isoConversation.create({
+          data: {
+            userId: ctx.userId!,
+            title: input.title ?? "Nova Consulta ISO",
+            norm: input.norm,
+            industry: input.industry,
+            companySize: input.companySize,
+            maturityLevel: input.maturityLevel,
+          },
+        }),
+      ),
+
+    listConversations: authedProcedure.query(({ ctx }) =>
+      prisma.isoConversation.findMany({
+        where: { userId: ctx.userId! },
+        orderBy: { updatedAt: "desc" },
+        include: { messages: { take: 1, orderBy: { createdAt: "desc" } } },
+      }),
+    ),
+
+    getConversation: authedProcedure
+      .input(z.object({ id: z.string() }))
+      .query(({ input, ctx }) =>
+        prisma.isoConversation.findFirstOrThrow({
+          where: { id: input.id, userId: ctx.userId! },
+          include: { messages: { orderBy: { createdAt: "asc" } } },
+        }),
+      ),
+
+    updateConversation: authedProcedure
+      .input(
+        z.object({
+          id: z.string(),
+          title: z.string().optional(),
+          norm: z.string().optional(),
+          industry: z.string().optional(),
+          companySize: z.string().optional(),
+          maturityLevel: z.string().optional(),
+        }),
+      )
+      .mutation(({ input, ctx }) =>
+        prisma.isoConversation.updateMany({
+          where: { id: input.id, userId: ctx.userId! },
+          data: {
+            ...(input.title !== undefined && { title: input.title }),
+            ...(input.norm !== undefined && { norm: input.norm }),
+            ...(input.industry !== undefined && { industry: input.industry }),
+            ...(input.companySize !== undefined && { companySize: input.companySize }),
+            ...(input.maturityLevel !== undefined && { maturityLevel: input.maturityLevel }),
+          },
+        }),
+      ),
+
+    deleteConversation: authedProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input, ctx }) => {
+        await prisma.isoConversation.deleteMany({
+          where: { id: input.id, userId: ctx.userId! },
+        });
+        return { ok: true };
+      }),
+
+    sendMessage: authedProcedure
+      .input(
+        z.object({
+          conversationId: z.string(),
+          content: z.string().min(1).max(8000),
+        }),
+      )
+      .mutation(async ({ input, ctx }) => {
+        const convo = await prisma.isoConversation.findFirstOrThrow({
+          where: { id: input.conversationId, userId: ctx.userId! },
+          include: { messages: { orderBy: { createdAt: "asc" } } },
+        });
+
+        await prisma.isoMessage.create({
+          data: { conversationId: convo.id, role: "user", content: input.content },
+        });
+
+        const history = convo.messages.map((m) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        }));
+        history.push({ role: "user", content: input.content });
+
+        const reply = await chatCompletion(history, {
+          norm: convo.norm ?? undefined,
+          industry: convo.industry ?? undefined,
+          companySize: (convo.companySize ?? undefined) as "micro" | "pequena" | "media" | "grande" | undefined,
+          maturityLevel: (convo.maturityLevel ?? undefined) as "inicial" | "parcial" | "avancado" | undefined,
+        });
+
+        const saved = await prisma.isoMessage.create({
+          data: { conversationId: convo.id, role: "assistant", content: reply },
+        });
+
+        await prisma.isoConversation.update({
+          where: { id: convo.id },
+          data: { updatedAt: new Date() },
+        });
+
+        return { message: saved };
       }),
   }),
 });

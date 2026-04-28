@@ -22,7 +22,8 @@
     "zod": "^3.23.8",
     "@arquiteure/api": "workspace:*",
     "@arquiteure/core": "workspace:*",
-    "@arquiteure/db": "workspace:*"
+    "@arquiteure/db": "workspace:*",
+    "@arquiteure/iso-consultant": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",

@@ -19,7 +19,8 @@
     "@arquiteure/validator": "workspace:*",
     "@arquiteure/knowledge": "workspace:*",
     "@arquiteure/drawing": "workspace:*",
-    "@arquiteure/exporter": "workspace:*"
+    "@arquiteure/exporter": "workspace:*",
+    "@arquiteure/iso-consultant": "workspace:*"
   },
   "devDependencies": { "typescript": "^5.4.5" }
 }
