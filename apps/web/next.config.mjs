@@ -16,6 +16,17 @@ const config = {
     "@arquiteure/knowledge",
     "@arquiteure/drawing",
     "@arquiteure/exporter",
+    "@arquiteure/iso-consultant",
   ],
+  webpack(config) {
+    // Resolve ESM .js imports to their TypeScript source counterparts
+    // Required for workspace packages that use `import ... from "./foo.js"` pattern
+    config.resolve.extensionAlias = {
+      ".js": [".ts", ".tsx", ".js", ".jsx"],
+      ".mjs": [".mts", ".mjs"],
+      ".cjs": [".cts", ".cjs"],
+    };
+    return config;
+  },
 };
 export default config;

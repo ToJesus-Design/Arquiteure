@@ -1,11 +1,12 @@
 import { initTRPC, TRPCError } from "@trpc/server";
+import superjson from "superjson";
 
 export interface Context {
   userId: string | null;
   role: "CLIENT" | "ARCHITECT" | "ENGINEER" | "ADMIN" | null;
 }
 
-const t = initTRPC.context<Context>().create();
+const t = initTRPC.context<Context>().create({ transformer: superjson });
 
 export const router = t.router;
 export const publicProcedure = t.procedure;
