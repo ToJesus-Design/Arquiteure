@@ -224,29 +224,47 @@ def detect_norm(text: str) -> str:
 
 
 def detect_intent(text: str) -> str:
-    text = text.lower()
-    if any(w in text for w in ["gap", "diagnós", "análise", "lacuna", "situação atual", "o que falta", "estado atual"]):
+    t = text.lower()
+    # Priority: audit > docs > gap > plan > generic
+    audit_words = ["auditoria interna", "auditoria externa", "auditor", "checklist",
+                   "não conformidade", " nc ", "verificação", "certificadora",
+                   "preparar auditoria", "simula perguntas"]
+    doc_words   = ["document", "política", "procedimento", "formulário", "registo",
+                   "instrução", "manual", "template", "modelo de", "escreve", "redige",
+                   "cria um", "obrigatórios para"]
+    gap_words   = ["gap", "diagnós", "análise", "lacuna", "situação atual", "estado atual",
+                   "o que nos falta", "o que falta", "o que precis", "requisitos",
+                   "nunca tiv", "sem sistema", "sem qualquer", "quais são os",
+                   "não cumprimos", "implementar iso", "de raiz"]
+    plan_words  = ["por onde começo", "por onde começar", "cronograma", "fases",
+                   "meses para", "certificar em", "quando posso", "quanto demora",
+                   "como certificar", "passos para"]
+    if any(w in t for w in audit_words): return "audit"
+    if any(w in t for w in doc_words):   return "docs"
+    if any(w in t for w in gap_words):   return "gap"
+    if any(w in t for w in plan_words):  return "plan"
+    # Fallback: if company context + norm → gap analysis
+    if any(w in t for w in ["trabalhadores", "empresa", "fábrica", "indústria",
+                             "temos", "nunca", "queremos", "precisamos"]):
         return "gap"
-    if any(w in text for w in ["document", "política", "procedimento", "formulário", "registo", "instrução"]):
-        return "docs"
-    if any(w in text for w in ["audit", "nc", "não conformidade", "checklist", "verificação"]):
-        return "audit"
-    if any(w in text for w in ["plano", "etapa", "prazo", "projeto", "certificar", "implementar", "cronograma"]):
-        return "plan"
     return "generic"
 
 
 def build_response(messages: list) -> str:
-    # Extract last user message and system context
     user_msgs = [m["content"] for m in messages if m.get("role") == "user"]
     sys_msgs  = [m["content"] for m in messages if m.get("role") == "system"]
 
     last = user_msgs[-1] if user_msgs else ""
-    sys  = sys_msgs[0] if sys_msgs else ""
 
-    # Detect norm from context (system + last message)
-    full_ctx = sys + " " + " ".join(user_msgs)
-    norm = detect_norm(full_ctx)
+    # Extract only the context-specific lines from system (after "## Contexto desta sessão")
+    sys_ctx = ""
+    for s in sys_msgs:
+        if "Contexto desta sessão" in s:
+            sys_ctx = s.split("## Contexto desta sessão")[-1]
+
+    # Detect norm from context lines + user messages only (not full system prompt)
+    norm_ctx = sys_ctx + " " + " ".join(user_msgs)
+    norm = detect_norm(norm_ctx)
     intent = detect_intent(last)
 
     norm_key = norm.lower().replace(" ", "").replace("/", "").replace("-", "")
